@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script 
+        src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
+</head>
+<body>
+
+<h1>Expense Tracker</h1>
+
+<form method="POST" action="/add">
+    <input type="number" name="amount" placeholder="Amount" required>
+   <select name="category" id="category" onchange="checkCategory()" required>
+    <option value="">Select Category</option>
+    <option value="Home">Home</option>
+    <option value="Travel">Travel</option>
+    <option value="Food">Food</option>
+    <option value="Movie">Movie</option>
+    <option value="Shopping">Shopping</option>
+    <option value="Other">Other</option>
+</select>
+
+<input type="text" name="custom_category" id="customCategory"
+       placeholder="Enter custom category" style="display:none;">
+
+    <input type="text" name="description" placeholder="Description" required>
+    <input type="date" name="date" id="expense-date" required>
+<button type="button" class="today-btn" onclick="setToday()">Today</button>
+
+
+    <button>Add Expense</button>
+</form>
+
+<h3>Total Expense: ₹{{ total }}</h3>
+<button id="analysisToggleBtn" onclick="toggleAnalysis()" class="analysis-btn">
+    Show Analysis
+</button>
+
+<div id="analysisSection" style="display:none; margin-top:20px;">
+    <h2>Expense Analysis</h2>
+
+    <div class="analysis-controls">
+        <button onclick="showDailyChart()">Daily Analysis</button>
+        <button onclick="showMonthlyChart()">Monthly Analysis</button>
+    </div>
+
+    <div class="charts">
+        <canvas id="dailyChart" style="display:none;"></canvas>
+        <canvas id="monthlyChart" style="display:none;"></canvas>
+    </div>
+</div>
+
+
+
+<div class="filters">
+    <form method="GET" action="/daily" style="display:inline;">
+        <input type="date" name="date" required>
+        <button type="submit">Daily</button>
+    </form>
+
+    <form method="GET" action="/daily" style="display:inline;">
+        <input type="hidden" name="today" value="1">
+        <button type="submit">Today</button>
+    </form>
+
+    <form method="GET" action="/monthly" style="display:inline;">
+        <input type="month" name="month" required>
+        <button type="submit">Monthly</button>
+    </form>
+
+    <a href="/">All</a>
+</div>
+
+
+<table>
+    <tr>
+        <th>Amount</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Date</th>
+        <th>Action</th>
+    </tr>
+
+    {% for expense in expenses %}
+    <tr>
+        <td>{{ expense[1] }}</td>
+        <td>{{ expense[2] }}</td>
+        <td>{{ expense[3] }}</td>
+        <td>{{ expense[4] }}</td>
+        <td>
+           <a href="/edit/{{ expense[0] }}">Edit</a>
+            <a href="/delete/{{ expense[0] }}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<div class="logout-container">
+    <a href="/logout" class="logout-btn">Logout</a>
+</div>
+
+<script>
+function checkCategory() {
+    let category = document.getElementById("category").value;
+    let customInput = document.getElementById("customCategory");
+
+    if (category === "Other") {
+        customInput.style.display = "inline";
+        customInput.required = true;
+    } else {
+        customInput.style.display = "none";
+        customInput.required = false;
+    }
+}
+</script>
+<script>
+function setToday() {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById("expense-date");
+    dateInput.value = today;
+    dateInput.focus();
+}
+</script>
+<script>
+    const dailyLabels = {{ daily_labels | default([]) | tojson }};
+    const dailyValues = {{ daily_values | default([]) | tojson }};
+
+    const monthlyLabels = {{ monthly_labels | default([]) | tojson }};
+    const monthlyValues = {{ monthly_values | default([]) | tojson }};
+</script>
+
+<script>
+let chartsDrawn = false;
+let dailyChartInstance = null;
+let monthlyChartInstance = null;
+
+function toggleAnalysis() {
+    const section = document.getElementById("analysisSection");
+    const btn = document.getElementById("analysisToggleBtn");
+
+    if (section.style.display === "none") {
+        section.style.display = "block";
+        btn.innerText = "Hide Analysis";
+
+        if (!chartsDrawn) {
+            drawCharts();
+            chartsDrawn = true;
+        }
+    } else {
+        section.style.display = "none";
+        btn.innerText = "Show Analysis";
+
+        // Hide charts when closing
+        document.getElementById("dailyChart").style.display = "none";
+        document.getElementById("monthlyChart").style.display = "none";
+    }
+}
+
+function drawCharts() {
+    const dailyCtx = document.getElementById("dailyChart");
+    const monthlyCtx = document.getElementById("monthlyChart");
+
+    dailyChartInstance = new Chart(dailyCtx, {
+        type: "line",
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: "Daily Expenses",
+                data: dailyValues,
+                borderWidth: 2,
+                fill: false
+            }]
+        }
+    });
+
+    monthlyChartInstance = new Chart(monthlyCtx, {
+        type: "bar",
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: "Monthly Expenses",
+                data: monthlyValues,
+                borderWidth: 1
+            }]
+        }
+    });
+}
+
+function showDailyChart() {
+    document.getElementById("dailyChart").style.display = "block";
+    document.getElementById("monthlyChart").style.display = "none";
+}
+
+function showMonthlyChart() {
+    document.getElementById("monthlyChart").style.display = "block";
+    document.getElementById("dailyChart").style.display = "none";
+}
+</script>
+
+
+
+
+</body>
+</html>

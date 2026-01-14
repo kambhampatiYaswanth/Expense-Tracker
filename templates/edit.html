@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Expense</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='edit.css') }}">
+</head>
+<body>
+
+<div class="edit-container">
+    <h2>Edit Expense</h2>
+
+    <form method="POST" action="/update/{{ expense[0] }}">
+        <input type="number" name="amount" value="{{ expense[1] }}" required>
+
+        <select name="category" required>
+            <option value="{{ expense[2] }}">{{ expense[2] }}</option>
+            <option>Home</option>
+            <option>Travel</option>
+            <option>Food</option>
+            <option>Movie</option>
+            <option>Shopping</option>
+            <option>Other</option>
+        </select>
+
+        <input type="text" name="description" value="{{ expense[3] }}">
+
+        <input type="date" name="date" value="{{ expense[4] }}" required>
+
+        <button type="submit">Update Expense</button>
+    </form>
+
+    <a href="/" class="edit-back">← Back to Home</a>
+</div>
+
+</body>
+</html>
